@@ -1,0 +1,29 @@
+pragma soliditypp ^0.4.2;
+
+contract GuessToWin{
+
+    mapping(bytes32=> uint) public balances;
+
+    tokenId token = tokenId("tti_5649544520544f4b454e6e40");
+
+    event Funded(address indexed addr, uint amount, bytes32 hashval, string log);
+    event Awarded(address indexed addr, uint amount, string guess, string log);
+    event Failed(address indexed addr, uint amount, string guess, string log);
+
+    onMessage Fund(bytes32 hashval) payable{
+        require(msg.tokenid == token);
+        require(msg.amount > 0);
+        balances[hashval] += msg.amount;
+        emit Funded(msg.sender, msg.amount, hashval,"Funded!!!");
+    }
+    onMessage Guess(string calldata body){
+        bytes32 hashval = blake2b(abi.encodePacked(body));
+        if(balances[hashval] >0){
+            msg.sender.transfer(token, balances[hashval]);
+            balances[hashval]=0;
+            emit Awarded(msg.sender, balances[hashval], body,"Correct guess, Awarded!!!");
+        }else{
+            emit Failed(msg.sender, 0, body, "Failed guess, try again!");
+        }
+    }
+}
